@@ -17,6 +17,9 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-docker
-.dockerignore
+# 忽略所有 docker 内容
+docker/*
+# 但保留用到的配置文件
+!docker/uploads.ini
+!docker/entrypoint.sh
 .github
