@@ -1,0 +1,42 @@
+#version: '3.8'
+
+services:
+  bixa:
+    image: ldxw/bixa:latest   # 使用构建好的镜像
+    restart: always
+    container_name: bixa
+    networks:
+          - bixa-net
+    ports:
+      - "8100:80"
+    volumes:
+      - ./html:/var/www/html
+    depends_on:
+      - bixa-db
+
+  bixa-db:
+    #image: mysql:8.0
+    image: bitnami/mysql:8.0
+    container_name: bixa-db
+    user: "1001"
+    networks:
+          - bixa-net
+    restart: always
+    environment:
+      MYSQL_DATABASE: bixa
+      MYSQL_ROOT_PASSWORD: bixa
+      MYSQL_USER: bixa
+      MYSQL_PASSWORD: bixa
+      ALLOW_EMPTY_PASSWORD: no
+    #ports:
+    #  - "3606:3306"
+    volumes:
+      #- ./mysql:/var/lib/mysql
+      - ./mysql:/bitnami/mysql
+
+networks:
+  bixa-net:
+    external: false
+    ipam:
+      config:
+        - subnet: 172.150.0.0/16
