@@ -18,7 +18,3 @@ yarn-error.log
 /.idea
 /.vscode
 .github
-# 只忽略 docker 目录中无关内容
-docker/*
-!docker/entrypoint.sh
-!docker/uploads.ini
