@@ -1,0 +1,79 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  IMAGE_NAME: ldxw/bixa
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/bixa
+  REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
+  REGISTRY_PASS: ${{ secrets.DOCKER_PASSWORD }}
+
+jobs:
+  docker:
+    name: Build & Push Multi-Arch Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed for GitHub release uploads
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set version and timestamp
+        id: meta
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          TIME=$(date +%Y%m%d%H%M)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TIME_TAG=$TIME" >> $GITHUB_ENV
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASS }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            ${{ env.IMAGE_NAME }}:${{ env.TIME_TAG }}
+            ${{ env.GHCR_IMAGE }}:latest
+            ${{ env.GHCR_IMAGE }}:${{ env.VERSION }}
+            ${{ env.GHCR_IMAGE }}:${{ env.TIME_TAG }}
+
+      - name: Package source (zip/tar.gz)
+        run: |
+          mkdir dist
+          git archive --format=zip --output=dist/bixa-${{ env.VERSION }}.zip HEAD
+          git archive --format=tar.gz --output=dist/bixa-${{ env.VERSION }}.tar.gz HEAD
+
+      - name: Upload release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          files: |
+            dist/bixa-${{ env.VERSION }}.zip
+            dist/bixa-${{ env.VERSION }}.tar.gz
