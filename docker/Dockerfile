@@ -4,10 +4,10 @@
 FROM php:8.2-cli AS builder
 
 # 使用阿里云 APT 源，禁用 GPG 校验（适合国内 CI 构建环境）
-RUN rm -f /etc/apt/sources.list.d/* && \
-    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm main contrib non-free" > /etc/apt/sources.list && \
-    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
+#RUN rm -f /etc/apt/sources.list.d/* && \
+#    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm main contrib non-free" > /etc/apt/sources.list && \
+#    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
+#    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
 
 
 # 安装依赖
@@ -34,10 +34,10 @@ RUN composer install --optimize-autoloader --no-dev && rm -rf ~/.composer/cache
 FROM php:8.2-apache
 
 # 使用阿里云 APT 源，禁用 GPG 校验（适合国内 CI 构建环境）
-RUN rm -f /etc/apt/sources.list.d/* && \
-    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm main contrib non-free" > /etc/apt/sources.list && \
-    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
+#RUN rm -f /etc/apt/sources.list.d/* && \
+#    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm main contrib non-free" > /etc/apt/sources.list && \
+#    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
+#    echo "deb [trusted=yes] http://mirrors.aliyun.com/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
 
 
 
