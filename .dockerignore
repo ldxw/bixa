@@ -19,5 +19,3 @@ yarn-error.log
 /.vscode
 .github
 Dockerfile
-entrypoint.sh
-uploads.ini
