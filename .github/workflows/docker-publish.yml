@@ -7,7 +7,6 @@ on:
 
 env:
   IMAGE_NAME: ldxw/bixa
-  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/bixa
   REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
   REGISTRY_PASS: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -60,9 +59,9 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
             ${{ env.IMAGE_NAME }}:${{ env.TIME_TAG }}
-            ${{ env.GHCR_IMAGE }}:latest
-            ${{ env.GHCR_IMAGE }}:${{ env.VERSION }}
-            ${{ env.GHCR_IMAGE }}:${{ env.TIME_TAG }}
+            ghcr.io/${{ github.repository }}/bixa:latest
+            ghcr.io/${{ github.repository }}/bixa:${{ env.VERSION }}
+            ghcr.io/${{ github.repository }}/bixa:${{ env.TIME_TAG }}
 
       - name: Package source (zip/tar.gz)
         run: |
