@@ -18,4 +18,6 @@ yarn-error.log
 /.idea
 /.vscode
 .github
-docker/
+Dockerfile
+entrypoint.sh
+uploads.ini

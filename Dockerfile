@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite
     
 # 设置 PHP 上传参数和超时时间
-COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 # 启用 .htaccess 和设置 public 为网站根目录
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf && \
@@ -62,7 +62,7 @@ RUN chown -R www-data:www-data /var/www/html.bak
 
 
 # 添加入口脚本
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # 设置挂载点
