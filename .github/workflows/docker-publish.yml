@@ -68,7 +68,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
             ${{ env.IMAGE_NAME }}:${{ env.TIME_TAG }}
-            # ghcr.io/${{ github.repository }}/bixa:${{ env.VERSION }}
+          #  ghcr.io/${{ github.repository }}/bixa:${{ env.VERSION }}
 
       - name: Package source (zip/tar.gz)
         run: |
