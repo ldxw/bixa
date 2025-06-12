@@ -7,9 +7,11 @@ on:
         description: 'Tag version (e.g. v2.0.2)'
         required: true
         default: 'v2.0.2'
-  push:
-    tags:
-      - 'v*'
+  #push:
+  #  tags:
+  #    - 'v*'
+  branches:
+      - dev
 
 env:
   IMAGE_NAME: ldxw/bixa
