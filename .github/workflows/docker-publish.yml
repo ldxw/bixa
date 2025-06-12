@@ -10,7 +10,7 @@ on:
   #push:
   #  tags:
   #    - 'v*'
-   branches:
+    branches:
       - dev
 
 env:
