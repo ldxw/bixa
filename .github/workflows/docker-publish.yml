@@ -7,11 +7,10 @@ on:
         description: 'Tag version (e.g. v2.0.2)'
         required: true
         default: 'v2.0.2'
-  #push:
-  #  tags:
-  #    - 'v*'
-    branches:
-      - dev
+
+  push:
+    tags:
+      - 'v*'
 
 env:
   IMAGE_NAME: ldxw/bixa
@@ -24,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Needed for GitHub release uploads
+
+    if: github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Checkout
