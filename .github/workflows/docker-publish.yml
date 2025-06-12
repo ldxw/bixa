@@ -1,6 +1,12 @@
 name: Build and Publish Docker Image
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag version (e.g. v2.0.2)'
+        required: true
+        default: 'v2.0.2'
   push:
     tags:
       - 'v*'
