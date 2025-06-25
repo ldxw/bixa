@@ -1,5 +1,5 @@
 
-name: 📦 构建并发布（高密度 zip 分卷 + 自定义文件名前缀）
+name: 📦 构建并发布（隔离目录 + 高密度 zip 分卷）
 
 on:
   workflow_dispatch:
@@ -57,28 +57,29 @@ jobs:
                     --exclude='composer.*' --exclude='*.lock' \
                     --exclude='vendor/bin' workspace/ release/
 
-      - name: 🗜️ 高密度分卷压缩并生成 manifest（命名为 文件名-N.zip）
+      - name: 🗜️ 高密度分卷压缩（每包接近 max_size）+ manifest + 独立目录
         run: |
-          mkdir chunks
+          prefix="bixa-v${{ github.event.inputs.version }}-composer"
+          output_dir="chunks/${prefix}"
+          mkdir -p "$output_dir"
           cd release
           i=1
-          prefix="bixa-v${{ github.event.inputs.version }}-composer"
           max=$((${GITHUB_EVENT_INPUTS_MAX_SIZE_MB:-10} * 1024 * 1024))
           total=0
           files=()
-          manifest="../chunks/manifest.txt"
+          manifest="../${output_dir}/manifest.txt"
           echo "" > "$manifest"
           for f in $(find . -type f | sort); do
             size=$(stat -c%s "$f")
             if [ $size -gt $max ]; then
-              zip "../chunks/${prefix}-${i}.zip" "$f"
+              zip -9 "../${output_dir}/${prefix}-${i}.zip" "$f"
               echo "${prefix}-${i}.zip:" >> "$manifest"
               echo "  $f" >> "$manifest"
               i=$((i + 1))
               continue
             fi
             if [ $((total + size)) -gt $max ]; then
-              zip "../chunks/${prefix}-${i}.zip" "${files[@]}"
+              zip -9 "../${output_dir}/${prefix}-${i}.zip" "${files[@]}"
               echo "${prefix}-${i}.zip:" >> "$manifest"
               printf "  %s\n" "${files[@]}" >> "$manifest"
               i=$((i + 1))
@@ -89,24 +90,25 @@ jobs:
             total=$((total + size))
           done
           if [ ${#files[@]} -gt 0 ]; then
-            zip "../chunks/${prefix}-${i}.zip" "${files[@]}"
+            zip -9 "../${output_dir}/${prefix}-${i}.zip" "${files[@]}"
             echo "${prefix}-${i}.zip:" >> "$manifest"
             printf "  %s\n" "${files[@]}" >> "$manifest"
           fi
           cd ..
 
-      - name: 🚀 发布 Release（标记 zip 分卷格式）
+      - name: 🚀 发布 Release（版本隔离目录 + 高密度标记）
         uses: softprops/action-gh-release@v2
         with:
           name: 📦 bixa v${{ github.event.inputs.version }}（composer 构建）（zip 分卷格式）
           tag_name: v${{ github.event.inputs.version }}-composer
           files: |
-            chunks/bixa-v${{ github.event.inputs.version }}-composer-*.zip
-            chunks/manifest.txt
+            chunks/bixa-v${{ github.event.inputs.version }}-composer/*.zip
+            chunks/bixa-v${{ github.event.inputs.version }}-composer/manifest.txt
           body: |
             🎉 发布版本：v${{ github.event.inputs.version }}
-            📦 文件已按 zip 分卷格式打包（最大 ${{ github.event.inputs.max_size_mb || '10' }}MB/包）
-            📄 附带文件清单 manifest.txt，命名格式为：bixa-v版本号-composer-*.zip
-            📥 下载全部 zip 文件后统一解压
+            📦 已使用 zip 分卷高密度压缩（最大 ${{ github.event.inputs.max_size_mb || '10' }}MB/包）
+            📂 每包为：bixa-v版本号-composer-N.zip
+            📄 清单文件：manifest.txt
+            📥 下载所有 zip 文件后解压
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
