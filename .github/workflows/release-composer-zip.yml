@@ -1,5 +1,5 @@
 
-name: 📦 构建并发布（可配置分卷大小 + 文件清单）
+name: 📦 构建并发布（高密度 zip 分卷 + 自定义文件名前缀）
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
         required: false
         default: false
       max_size_mb:
-        description: '单个 zip 包最大大小（单位：MB，默认 10）'
+        description: '单个 zip 包最大大小（MB，默认 10）'
         required: false
         default: '10'
 
@@ -57,32 +57,40 @@ jobs:
                     --exclude='composer.*' --exclude='*.lock' \
                     --exclude='vendor/bin' workspace/ release/
 
-      - name: 🗜️ 递归分卷压缩 + manifest.txt
+      - name: 🗜️ 高密度分卷压缩并生成 manifest（命名为 文件名-N.zip）
         run: |
           mkdir chunks
           cd release
           i=1
+          prefix="bixa-v${{ github.event.inputs.version }}-composer"
           max=$((${GITHUB_EVENT_INPUTS_MAX_SIZE_MB:-10} * 1024 * 1024))
           total=0
           files=()
           manifest="../chunks/manifest.txt"
           echo "" > "$manifest"
-          for f in $(find . -type f); do
+          for f in $(find . -type f | sort); do
             size=$(stat -c%s "$f")
-            total=$((total + size))
-            files+=("$f")
-            if [ $total -gt $max ]; then
-              zip "../chunks/file-$i.zip" "${files[@]::${#files[@]}-1}"
-              echo "file-$i.zip:" >> "$manifest"
-              printf "  %s\n" "${files[@]::${#files[@]}-1}" >> "$manifest"
+            if [ $size -gt $max ]; then
+              zip "../chunks/${prefix}-${i}.zip" "$f"
+              echo "${prefix}-${i}.zip:" >> "$manifest"
+              echo "  $f" >> "$manifest"
               i=$((i + 1))
-              files=("${files[-1]}")
-              total=$size
+              continue
             fi
+            if [ $((total + size)) -gt $max ]; then
+              zip "../chunks/${prefix}-${i}.zip" "${files[@]}"
+              echo "${prefix}-${i}.zip:" >> "$manifest"
+              printf "  %s\n" "${files[@]}" >> "$manifest"
+              i=$((i + 1))
+              files=()
+              total=0
+            fi
+            files+=("$f")
+            total=$((total + size))
           done
           if [ ${#files[@]} -gt 0 ]; then
-            zip "../chunks/file-$i.zip" "${files[@]}"
-            echo "file-$i.zip:" >> "$manifest"
+            zip "../chunks/${prefix}-${i}.zip" "${files[@]}"
+            echo "${prefix}-${i}.zip:" >> "$manifest"
             printf "  %s\n" "${files[@]}" >> "$manifest"
           fi
           cd ..
@@ -93,14 +101,12 @@ jobs:
           name: 📦 bixa v${{ github.event.inputs.version }}（composer 构建）（zip 分卷格式）
           tag_name: v${{ github.event.inputs.version }}-composer
           files: |
-            chunks/file-*.zip
+            chunks/bixa-v${{ github.event.inputs.version }}-composer-*.zip
             chunks/manifest.txt
           body: |
             🎉 发布版本：v${{ github.event.inputs.version }}
-            📦 文件已按 zip 分卷格式打包（最大 ${{
-              github.event.inputs.max_size_mb || '10'
-            }}MB/包）
-            📄 文件清单：manifest.txt
-            📥 下载全部 file-*.zip 后解压
+            📦 文件已按 zip 分卷格式打包（最大 ${{ github.event.inputs.max_size_mb || '10' }}MB/包）
+            📄 附带文件清单 manifest.txt，命名格式为：bixa-v版本号-composer-*.zip
+            📥 下载全部 zip 文件后统一解压
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
