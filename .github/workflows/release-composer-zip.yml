@@ -1,0 +1,106 @@
+
+name: 📦 构建并发布（可配置分卷大小 + 文件清单）
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（例如：2.0.2）'
+        required: true
+      use_official:
+        description: '是否使用官方发布包（来自 bixacloud 仓库）？'
+        type: boolean
+        required: false
+        default: false
+      max_size_mb:
+        description: '单个 zip 包最大大小（单位：MB，默认 10）'
+        required: false
+        default: '10'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧰 准备构建目录
+        run: mkdir workspace
+
+      - name: 🌐 下载并解压官方包（如果选择）
+        if: ${{ github.event.inputs.use_official == 'true' }}
+        run: |
+          echo "✅ 使用官方包版本 v${{ github.event.inputs.version }}"
+          curl -L "https://github.com/bixacloud/bixa/archive/refs/tags/v${{ github.event.inputs.version }}.zip" -o source.zip
+          unzip source.zip -d workspace
+          mv workspace/*/* workspace/
+
+      - name: 📥 拉取当前仓库代码（默认）
+        if: ${{ github.event.inputs.use_official != 'true' }}
+        uses: actions/checkout@v4
+        with:
+          path: workspace
+
+      - name: ⚙️ 安装 PHP 与 Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, zip, intl
+          tools: composer
+
+      - name: 📦 安装生产环境依赖（Composer）
+        working-directory: workspace
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: 🧹 清理并准备发布目录
+        run: |
+          mkdir release
+          rsync -av --exclude='.git*' --exclude='tests' --exclude='.github' \
+                    --exclude='composer.*' --exclude='*.lock' \
+                    --exclude='vendor/bin' workspace/ release/
+
+      - name: 🗜️ 递归分卷压缩 + manifest.txt
+        run: |
+          mkdir chunks
+          cd release
+          i=1
+          max=$((${GITHUB_EVENT_INPUTS_MAX_SIZE_MB:-10} * 1024 * 1024))
+          total=0
+          files=()
+          manifest="../chunks/manifest.txt"
+          echo "" > "$manifest"
+          for f in $(find . -type f); do
+            size=$(stat -c%s "$f")
+            total=$((total + size))
+            files+=("$f")
+            if [ $total -gt $max ]; then
+              zip "../chunks/file-$i.zip" "${files[@]::${#files[@]}-1}"
+              echo "file-$i.zip:" >> "$manifest"
+              printf "  %s\n" "${files[@]::${#files[@]}-1}" >> "$manifest"
+              i=$((i + 1))
+              files=("${files[-1]}")
+              total=$size
+            fi
+          done
+          if [ ${#files[@]} -gt 0 ]; then
+            zip "../chunks/file-$i.zip" "${files[@]}"
+            echo "file-$i.zip:" >> "$manifest"
+            printf "  %s\n" "${files[@]}" >> "$manifest"
+          fi
+          cd ..
+
+      - name: 🚀 发布 Release（标记 zip 分卷格式）
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 📦 bixa v${{ github.event.inputs.version }}（composer 构建）（zip 分卷格式）
+          tag_name: v${{ github.event.inputs.version }}-composer
+          files: |
+            chunks/file-*.zip
+            chunks/manifest.txt
+          body: |
+            🎉 发布版本：v${{ github.event.inputs.version }}
+            📦 文件已按 zip 分卷格式打包（最大 ${{
+              github.event.inputs.max_size_mb || '10'
+            }}MB/包）
+            📄 文件清单：manifest.txt
+            📥 下载全部 file-*.zip 后解压
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
