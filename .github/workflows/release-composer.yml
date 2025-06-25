@@ -1,27 +1,30 @@
-name: 📦 构建并发布（dve 分支 / Composer / 官方包）
+name: 📦 构建并发布（指定分支 / Composer / 官方包）
 
 on:
   workflow_dispatch:
     inputs:
+      ref:
+        description: '构建分支名，例如：dve、main、feature/x'
+        required: true
+        default: 'dve'
       version:
-        description: '版本号（例如：2.0.2）'
+        description: '发布版本号，例如：2.0.2'
         required: true
       use_official:
-        description: '是否使用官方发布包（来自 bixacloud 仓库）？'
+        description: '是否使用官方源码包？（true = 下载官方 zip）'
         type: boolean
         required: false
         default: false
 
 jobs:
   build-and-release:
-    if: github.ref == 'refs/heads/dve'
     runs-on: ubuntu-latest
 
     steps:
       - name: 🧰 准备构建目录
         run: mkdir workspace
 
-      - name: 🌐 下载并解压官方包（如果选择）
+      - name: 🌐 下载官方源码包（如果选择）
         if: ${{ github.event.inputs.use_official == 'true' }}
         run: |
           echo "✅ 使用官方包版本 v${{ github.event.inputs.version }}"
@@ -29,11 +32,11 @@ jobs:
           unzip source.zip -d workspace
           mv workspace/*/* workspace/
 
-      - name: 📥 拉取当前仓库代码（默认）
+      - name: 📥 拉取指定分支代码（默认行为）
         if: ${{ github.event.inputs.use_official != 'true' }}
         uses: actions/checkout@v4
         with:
-          ref: dve
+          ref: ${{ github.event.inputs.ref }}
           path: workspace
 
       - name: ⚙️ 安装 PHP 与 Composer
@@ -43,23 +46,23 @@ jobs:
           extensions: mbstring, zip, intl
           tools: composer
 
-      - name: 📦 安装生产环境依赖（Composer）
+      - name: 📦 安装生产依赖（Composer 构建）
         working-directory: workspace
         run: composer install --no-dev --optimize-autoloader
 
-      - name: 🧹 清理并准备发布目录
+      - name: 🧹 准备发布目录
         run: |
           mkdir release
           rsync -av --exclude='.git*' --exclude='tests' --exclude='.github' \
                     --exclude='composer.*' --exclude='*.lock' \
                     --exclude='vendor/bin' workspace/ release/
 
-      - name: 🗜️ 生成压缩包
+      - name: 🗜️ 打包构建内容
         run: |
           cd release
           zip -r ../bixa-v${{ github.event.inputs.version }}-composer.zip ./
 
-      - name: 🚀 发布 Release 到 GitHub
+      - name: 🚀 发布 Release
         uses: softprops/action-gh-release@v2
         with:
           name: 📦 bixa v${{ github.event.inputs.version }}（composer 构建）
@@ -67,7 +70,8 @@ jobs:
           files: bixa-v${{ github.event.inputs.version }}-composer.zip
           body: |
             🎉 发布版本：v${{ github.event.inputs.version }}
-            🔧 构建方式：${{ github.event.inputs.use_official == 'true' && '官方源码包' || '当前仓库源码' }}
+            🛠 构建方式：${{ github.event.inputs.use_official == 'true' && '官方 zip 包' || '分支源码构建' }}
+            🔁 来源分支：${{ github.event.inputs.ref }}
             👤 构建者：${{ github.actor }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
