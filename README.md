@@ -4,20 +4,18 @@
 
 # Bixa - Hosting Management Platform
 
-> **Note:**  
-> **Development is active again!**
-> A bugfix release is coming to address currently known issues.
+> **Note: Development is currently paused !**
 > Pull requests are welcome and will still be accepted. If you want to see a feature, feel free to contribute it.
 
 ## 👀 What is Bixa?
 Bixa is a comprehensive hosting account and support management system designed primarily for MOFH (MyOwnFreeHost). Built with Laravel 11, it provides a robust platform for managing hosting accounts, support tickets, SSL certificates, and more.
 
 [![License](https://img.shields.io/badge/License-GPL_2.0-orange)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v2.0.1-informational)](https://github.com/bixacloud/bixa/releases/latest)
+[![Version](https://img.shields.io/badge/Version-v2.0.2-informational)](https://github.com/bixacloud/bixa/releases/latest)
 ![Build](https://img.shields.io/badge/Build-Passed-brightgreen)
 ![Framework](https://img.shields.io/badge/Framework-Laravel_11-red)
 ![Interface](https://img.shields.io/badge/Interface-Tabler-lightgreen)
-![Development](https://img.shields.io/badge/Development-Active-brightgreen)
+![Development](https://img.shields.io/badge/Development-Paused-brightgreen)
 
 ### 🎮 User Features
 - **Dashboard**: Central hub with account overview and quick service access
@@ -62,7 +60,7 @@ Your server needs to meet the following minimum requirements:
 - A valid, trusted SSL certificate
 
 ### 💾 Installation 
-For detailed installation instructions, please refer to our comprehensive documentation at [bixa.app/docs/installation](https://bixa.app/docs/install).
+For detailed installation instructions, please refer to our comprehensive documentation at [https://bixa.app/docs/#/install](https://bixa.app/docs/#/install).
 
 In brief:
 1. Download the latest release from our [GitHub repository](https://github.com/bixacloud/bixa/releases/latest)
@@ -73,7 +71,7 @@ In brief:
 6. Import the included `bixa.sql` file to your database using phpMyAdmin
 7. Use the included demo account to log in, then change your credentials
 
-No automatic installer is available - configuration must be done manually as described in our [installation guide](https://bixa.app/docs/install).
+No automatic installer is available - configuration must be done manually as described in our [installation guide](https://bixa.app/docs/#/install/).
 
 ### 📧 SMTP Services
 Here are some recommended SMTP services with free tiers that work well with Bixa:
@@ -87,9 +85,9 @@ Here are some recommended SMTP services with free tiers that work well with Bixa
 For comprehensive documentation covering all aspects of using and administering Bixa, please visit our official documentation at [bixa.app/docs](https://bixa.app/docs).
 
 The documentation includes:
-- [User Guide](https://bixa.app/docs/user)
-- [Admin Guide](https://bixa.app/docs/admin)
-- [API Documentation](https://bixa.app/docs/api)
+- [User Guide](https://bixa.app/docs/#/user/)
+- [Admin Guide](https://bixa.app/docs/#/admin/)
+- [API Documentation](https://bixa.app/docs/#/api/)
 
 ## 🤔 Need Help?
 
